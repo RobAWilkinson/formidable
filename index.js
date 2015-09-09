@@ -1,13 +1,6 @@
 var multiparty = require('multiparty');
 var app = require('express')();
 var fs = require('fs');
-var writeable = new require('stream').Writable();
-var bufs = [];
-var chunks = [];
-writeable._write = function(chunk, enc, next) {
-  chunks.push(chunk);
-  next();
-}
 
 app.get('/', function(req, res) {
   res.writeHead(200, {'content-type': 'text/html'});
@@ -20,6 +13,13 @@ app.get('/', function(req, res) {
   );
 });
 app.post('/upload', function(req, res) {
+    var writeable = new require('stream').Writable();
+    var bufs = [];
+    var chunks = [];
+    writeable._write = function(chunk, enc, next) {
+      chunks.push(chunk);
+      next();
+    }
     var form = new multiparty.Form({autoFiles: false});
     form.on('part', function(part) {
       part.on('error', function(err) {
