@@ -13,9 +13,13 @@ app.get('/', function(req, res) {
   );
 });
 app.post('/upload', function(req, res) {
+    // create a writeable stream to pipe the image data too
     var writeable = new require('stream').Writable();
-    var bufs = [];
     var chunks = [];
+    writeable.on('error', function(err) {
+      console.log(err);
+    });
+    // hijack its write method to insted push the buffer to an array
     writeable._write = function(chunk, enc, next) {
       chunks.push(chunk);
       next();
@@ -25,6 +29,7 @@ app.post('/upload', function(req, res) {
       part.on('error', function(err) {
         throw new Error(err);
       });
+      // pipe the data from the form to the writeStream
       part.pipe(writeable);
       part.resume();
     });
@@ -38,6 +43,7 @@ app.post('/upload', function(req, res) {
     });
     form.on('close', function() {
       console.log('closed');
+      // shrink the array of buffers down into one
       var b = Buffer.concat(chunks);
       console.log(b);
       console.log(b.toString("base64"));
@@ -46,9 +52,6 @@ app.post('/upload', function(req, res) {
     });
 
     form.parse(req);
-    writeable.on('error', function(err) {
-      console.log(err);
-    });
 })
 app.listen(3000, function() {
   console.log('listening');
